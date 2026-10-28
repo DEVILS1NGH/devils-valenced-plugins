@@ -393,22 +393,96 @@
 		return channel
 	}
 	function sendInvite() {
-		// Keep the invite path identical to MarkLong's known-good Valenced port.
-		// Do not route through the Spotify Web API used by the Listen Along playback fix.
+		// Keep the known-good MarkLong call path. This build adds diagnostics only; it does not
+		// change the activityAction payload or the Listen Along playback/sync functions.
 		var activity = mySpotifyActivity()
 		if (!activity || !activity.party || !activity.party.id) return toast('Play something on Spotify first.')
 		var draft = store('DraftStore')
-		var channel = sendMessage(
-			function (id) { return { content: (draft && draft.getDraft(id, 0)) || '' } },
-			true,
-			{ activityAction: { activity: activity, type: 3 } },
-		)
-		if (!channel) return
-		var f = finders()
-		var drafts = f.lookupModule(f.filters.withProps('clearDraft'))[0]
-		if (drafts) drafts.clearDraft(channel, 0)
-		var info = store('ChannelStore') && store('ChannelStore').getChannel(channel)
-		toast('Invite sent' + (info && info.name ? ' to #' + info.name : ''))
+		var channel = store('SelectedChannelStore').getChannelId()
+		if (!channel) return toast('Open a chat or channel first.')
+		var completed = false
+		var unsubscribe
+		var timeout
+		function cleanup() {
+			if (timeout) clearTimeout(timeout)
+			if (unsubscribe) { try { unsubscribe() } catch (e) {} }
+		}
+		function activitySnapshot() {
+			return {
+				keys: Object.keys(activity),
+				type: activity.type,
+				name: activity.name,
+				application_id: activity.application_id || activity.applicationId || null,
+				sync_id: activity.sync_id || null,
+				party: activity.party ? { id: activity.party.id || null, keys: Object.keys(activity.party) } : null,
+				metadataKeys: activity.metadata ? Object.keys(activity.metadata) : [],
+				timestamps: activity.timestamps || null,
+				secretsKeys: activity.secrets ? Object.keys(activity.secrets) : [],
+			}
+		}
+		function summarizeFailure(payload) {
+			var found = []
+			var seen = []
+			function walk(value, path, depth) {
+				if (!value || typeof value !== 'object' || depth > 4 || seen.indexOf(value) >= 0) return
+				seen.push(value)
+				Object.keys(value).forEach(function (key) {
+					var v = value[key]
+					var p = path ? path + '.' + key : key
+					if (/^(code|status|statusCode|httpStatus|errorCode|reason|detail|messageType|type|name|operation|endpoint|retryAfter|nonce)$/i.test(key) &&
+						(typeof v === 'string' || typeof v === 'number' || typeof v === 'boolean')) {
+						found.push(p + '=' + String(v).slice(0, 70))
+					}
+					if (/^(error|errors|response|body|data|message|reason|details|cause|payload|apiError)$/i.test(key) && v && typeof v === 'object') {
+						walk(v, p, depth + 1)
+					}
+				})
+			}
+		walk(payload, '', 0)
+		if (found.length) return found.slice(0, 6).join('; ')
+		return 'event keys=' + (payload && typeof payload === 'object' ? Object.keys(payload).join(',') : typeof payload)
+	}
+		function reportFailure(payload) {
+			if (completed) return payload
+			var failedChannel = payload && (payload.channelId || payload.channel_id || (payload.channel && payload.channel.id) ||
+				(payload.message && (payload.message.channel_id || payload.message.channelId)))
+			if (failedChannel && String(failedChannel) !== String(channel)) return payload
+			completed = true
+			cleanup()
+			var summary = summarizeFailure(payload)
+			try { console.warn('[Devils Spotify Tools] MESSAGE_SEND_FAILED', summary, activitySnapshot(), payload) } catch (e) {}
+			toast('Invite failed: ' + summary.slice(0, 145))
+			return payload
+		}
+		// Listen before sending so the server rejection payload can be captured.
+		unsubscribe = valenced.discord.flux.onFluxEventDispatched('MESSAGE_SEND_FAILED', reportFailure)
+		try {
+			try { console.info('[Devils Spotify Tools] Invite activity snapshot', activitySnapshot()) } catch (e) {}
+			timeout = setTimeout(function () {
+				if (completed) return
+				completed = true
+				cleanup()
+				toast('No send-error details captured. If Clyde appears, send the screenshot; this client did not expose the failure payload.')
+			}, 12000)
+			var sentChannel = sendMessage(
+				function (id) { return { content: (draft && draft.getDraft(id, 0)) || '' } },
+				true,
+				{ activityAction: { activity: activity, type: 3 } },
+			)
+			if (!sentChannel) {
+				completed = true
+				cleanup()
+				return
+			}
+			var f = finders()
+			var drafts = f.lookupModule(f.filters.withProps('clearDraft'))[0]
+			if (drafts) drafts.clearDraft(channel, 0)
+			if (!completed) toast('Invite submitted. Waiting for Discord response.')
+		} catch (e) {
+			completed = true
+			cleanup()
+			toast('Invite action threw: ' + String((e && e.message) || e))
+		}
 	}
 	function sendSongLink() {
 		var t = currentTrack()
