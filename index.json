@@ -8,13 +8,26 @@
       "description": "Fixed Listen Along playback and synchronization, plus Spotify invite, song link, and album link options.",
       "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
       "channels": {
-        "latest": "1.0.0"
+        "latest": "1.0.1"
       },
       "versions": {
         "1.0.0": {
           "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.0.zip",
           "sha256": "0b7554ff053f67380b67f4e8b31f6198c0ebab63db46e2cc79db6da7869352f2",
           "size": 20515,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "1.0.1": {
+          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.1.zip",
+          "sha256": "974f38e176221a17c170f0769b084ab26fa1e8c1eb1cf83ab8ad19fc1034bc9c",
+          "size": 21094,
           "dependencies": {
             "valenced.api": {
               "version": ">=1 <2"
