@@ -393,59 +393,22 @@
 		return channel
 	}
 	function sendInvite() {
-		// Use the same activity source and message-action call as MarkLong's working port.
-		var spotify = store('SpotifyStore')
-		var activity = spotify && spotify.getActivity && spotify.getActivity()
+		// Keep the invite path identical to MarkLong's known-good Valenced port.
+		// Do not route through the Spotify Web API used by the Listen Along playback fix.
+		var activity = mySpotifyActivity()
 		if (!activity || !activity.party || !activity.party.id) return toast('Play something on Spotify first.')
-		var channel = store('SelectedChannelStore') && store('SelectedChannelStore').getChannelId()
-		if (!channel) return toast('Open a chat or channel first.')
 		var draft = store('DraftStore')
-		var completed = false
-		var unsubscribe
-		var timeout
-		function cleanup() {
-			if (timeout) clearTimeout(timeout)
-			if (unsubscribe) { try { unsubscribe() } catch (e) {} }
-		}
-		function reportFailure(payload) {
-			if (completed) return payload
-			var failedChannel = payload && (payload.channelId || payload.channel_id || (payload.channel && payload.channel.id))
-			if (failedChannel && String(failedChannel) !== String(channel)) return payload
-			completed = true
-			cleanup()
-			toast('Discord could not deliver this invite. In DMs, check that the recipient accepts your messages; try a mutual server channel if delivery keeps failing.')
-			return payload
-		}
-		// Listen for Discord's rejection before submitting the invite so the plugin never claims
-		// successful delivery when Clyde posts MESSAGE_SEND_FAILED.
-		unsubscribe = valenced.discord.flux.onFluxEventDispatched('MESSAGE_SEND_FAILED', reportFailure)
-		try {
-			// Route through sendMessage(), which invokes messages.sendMessage(...) as a method.
-			// The previous revision detached the function into a local variable, losing its receiver.
-			var sentChannel = sendMessage(
-				function (id) { return { content: (draft && draft.getDraft(id, 0)) || '' } },
-				true,
-				{ activityAction: { activity: activity, type: 3 } },
-			)
-			if (!sentChannel) {
-				completed = true
-				cleanup()
-				return
-			}
-			var f = finders()
-			var drafts = f.lookupModule(f.filters.withProps('clearDraft'))[0]
-			if (drafts) drafts.clearDraft(channel, 0)
-			timeout = setTimeout(function () {
-				if (completed) return
-				completed = true
-				cleanup()
-				toast('Invite submitted. Check the chat to confirm Discord delivered the card.')
-			}, 2500)
-		} catch (e) {
-			completed = true
-			cleanup()
-			toast('Could not send listen-along invite: ' + String((e && e.message) || e))
-		}
+		var channel = sendMessage(
+			function (id) { return { content: (draft && draft.getDraft(id, 0)) || '' } },
+			true,
+			{ activityAction: { activity: activity, type: 3 } },
+		)
+		if (!channel) return
+		var f = finders()
+		var drafts = f.lookupModule(f.filters.withProps('clearDraft'))[0]
+		if (drafts) drafts.clearDraft(channel, 0)
+		var info = store('ChannelStore') && store('ChannelStore').getChannel(channel)
+		toast('Invite sent' + (info && info.name ? ' to #' + info.name : ''))
 	}
 	function sendSongLink() {
 		var t = currentTrack()
