@@ -22,6 +22,6 @@ The invite button now uses the live `SpotifyStore.getActivity()` payload, matchi
 
 Restored the Spotify invite function to the original MarkLong Valenced implementation (`mySpotifyActivity()` plus `sendMessage(..., { activityAction: { activity, type: 3 } })`). The Listen Along playback/synchronization code is unchanged in this release.
 
-## Version 1.0.4 diagnostic build
+## Version 1.0.5 diagnostic build
 
-This version preserves the original MarkLong invite send path and the existing Listen Along play/sync implementation. It adds a one-shot listener for Discord's `MESSAGE_SEND_FAILED` event and logs a sanitized activity snapshot plus structured error fields to the client console. If the event provides an error code or reason, the plugin shows it in a toast. The diagnostics do not log Spotify access tokens.
+This version preserves the original MarkLong invite send path and the existing Listen Along play/sync implementation. It adds a one-shot listener for Discord's `MESSAGE_SEND_FAILED` event and logs a sanitized activity snapshot plus structured error fields to the client console. If the event provides an error code or reason, the plugin shows it in a toast. It does not log the raw event payload or Spotify access tokens.
