@@ -393,18 +393,13 @@
 		return channel
 	}
 	function sendInvite() {
-		// Match the original Revenge implementation: an activity invite must use SpotifyStore's
-		// own activity object. A general PresenceStore fallback can look like Spotify but lack the
-		// exact live activity payload Discord expects for a LISTEN (type 3) message.
+		// Use the same activity source and message-action call as MarkLong's working port.
 		var spotify = store('SpotifyStore')
 		var activity = spotify && spotify.getActivity && spotify.getActivity()
-		if (!activity || !activity.party || !activity.party.id) return toast('Play a song on Spotify first, and make sure Discord shows your Spotify activity.')
-		var f = finders()
-		var senderModule = f.lookupModule(f.filters.withProps('sendMessage', 'revealMessage'))[0]
+		if (!activity || !activity.party || !activity.party.id) return toast('Play something on Spotify first.')
 		var channel = store('SelectedChannelStore') && store('SelectedChannelStore').getChannelId()
-		if (!senderModule || typeof senderModule.sendMessage !== 'function' || !channel) return toast('Could not find Discord message controls for this channel.')
-		var draftStore = store('DraftStore')
-		var clearDraftModule = f.lookupModule(f.filters.withProps('clearDraft'))[0]
+		if (!channel) return toast('Open a chat or channel first.')
+		var draft = store('DraftStore')
 		var completed = false
 		var unsubscribe
 		var timeout
@@ -418,35 +413,33 @@
 			if (failedChannel && String(failedChannel) !== String(channel)) return payload
 			completed = true
 			cleanup()
-			toast('Discord rejected the listen-along invite (MESSAGE_SEND_FAILED). The invite was not delivered.')
+			toast('Discord could not deliver this invite. In DMs, check that the recipient accepts your messages; try a mutual server channel if delivery keeps failing.')
 			return payload
 		}
-		// Avoid the old false "Invite sent" toast when Discord rejects the optimistic message.
+		// Listen for Discord's rejection before submitting the invite so the plugin never claims
+		// successful delivery when Clyde posts MESSAGE_SEND_FAILED.
 		unsubscribe = valenced.discord.flux.onFluxEventDispatched('MESSAGE_SEND_FAILED', reportFailure)
 		try {
-			// Invoke the extracted action creator like the original Revenge plugin, preserving
-			// the four-argument activityAction contract and avoiding a changed receiver.
-			var send = senderModule.sendMessage
-			var result = send(channel, {
-				content: (draftStore && draftStore.getDraft(channel, 0)) || '',
-				tts: false,
-				invalidEmojis: [],
-				validNonShortcutEmojis: [],
-			}, true, { activityAction: { activity: activity, type: 3 } })
-			if (clearDraftModule && typeof clearDraftModule.clearDraft === 'function') clearDraftModule.clearDraft(channel, 0)
-			if (result && typeof result.then === 'function') {
-				result.catch(function (e) {
-					if (completed) return
-					completed = true
-					cleanup()
-					toast('Could not send listen-along invite: ' + String((e && e.message) || e))
-				})
+			// Route through sendMessage(), which invokes messages.sendMessage(...) as a method.
+			// The previous revision detached the function into a local variable, losing its receiver.
+			var sentChannel = sendMessage(
+				function (id) { return { content: (draft && draft.getDraft(id, 0)) || '' } },
+				true,
+				{ activityAction: { activity: activity, type: 3 } },
+			)
+			if (!sentChannel) {
+				completed = true
+				cleanup()
+				return
 			}
+			var f = finders()
+			var drafts = f.lookupModule(f.filters.withProps('clearDraft'))[0]
+			if (drafts) drafts.clearDraft(channel, 0)
 			timeout = setTimeout(function () {
 				if (completed) return
 				completed = true
 				cleanup()
-				toast('Listen-along invite submitted to Discord. Check the chat to confirm it appeared.')
+				toast('Invite submitted. Check the chat to confirm Discord delivered the card.')
 			}, 2500)
 		} catch (e) {
 			completed = true
