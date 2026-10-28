@@ -17,3 +17,7 @@ In Valenced, add the repository URL shown in the root README. The repository pub
 ## Version 1.0.1
 
 The invite button now uses the live `SpotifyStore.getActivity()` payload, matching the original Revenge implementation, and calls the Discord message action creator with the original four-argument `activityAction` contract. It also listens for `MESSAGE_SEND_FAILED` so the plugin no longer reports an invite as sent when Discord rejects it.
+
+## Version 1.0.3
+
+Restored the Spotify invite function to the original MarkLong Valenced implementation (`mySpotifyActivity()` plus `sendMessage(..., { activityAction: { activity, type: 3 } })`). The Listen Along playback/synchronization code is unchanged in this release.
