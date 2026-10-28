@@ -1,26 +1,64 @@
 # Devil's Valenced Plugins
 
-Community plugin repository maintained by [DEVILS1NGH](https://github.com/DEVILS1NGH).
+A community-maintained repository of plugins for [Valenced](https://github.com/).
 
-## Add this repository in Valenced
+**Maintainer:** [DEVILS1NGH](https://github.com/DEVILS1NGH)
 
-`https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/index.json`
+## Install
 
-Once published, this index lets Valenced browse, install, and update plugins directly.
+Add this repository in Valenced under **Settings → Plugins → Advanced → Repository URL**:
 
-## Current plugin
+```text
+https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/index.json
+```
 
-- **Spotify Tools** (`devils.spotify-tools`) v1.0.0: Listen Along playback/synchronization fix, Spotify invite, song link, and album link options.
+After adding it, open the plugin browser to install or update a plugin. The URL stays the same as new versions are published.
 
-## Credits
+## Available plugins
 
-- **MarkLong0467**: original Valenced port and distribution: https://github.com/MarkLong0467/EskimoPlugins
-- **nexpid**: original Revenge implementation: https://github.com/nexpid/RevengePlugins
-- **DEVILS1NGH**: playback fix and community packaging.
+| Plugin | ID | Current version | Description |
+| --- | --- | --- | --- |
+| Spotify Tools | `devils.spotify-tools` | 1.0.0 | Listen Along playback/synchronization fix, plus Spotify invite, song link, and album link options. |
 
-## Repository structure
+The published catalog on `gh-pages` is generated from the manifests and versioned ZIPs. Do not edit `gh-pages/index.json` manually; the publishing workflow regenerates it.
 
-- `main`: source code, plugin manifests, workflows, and publishing tooling.
-- `gh-pages`: the generated `index.json` and versioned ZIPs in `pool/`.
+## Repository layout
 
-Each plugin must keep its source and bundled artifact in sync. The catalog's SHA-256 and byte size must match the exact downloadable ZIP.
+```text
+.
+├── .github/workflows/publish.yml  # validates, packages, and publishes on push
+├── plugins/
+│   └── spotify-tools/
+│       ├── index.js               # plugin entry point
+│       ├── manifest.json          # Valenced metadata and dependencies
+│       └── README.md              # plugin-specific notes and credits
+├── scripts/
+│   ├── materialize_sources.py     # source/manifest preflight validation
+│   └── publish_repository.py      # ZIP packaging and index generation
+├── repo.config.json               # repository name, description, channel overrides
+├── TEMPLATE.md                    # how to add a plugin
+└── CONTRIBUTING.md                # release and contribution rules
+```
+
+- **`main`** contains editable source, manifests, documentation, and publishing tooling.
+- **`gh-pages`** contains the generated `index.json` and versioned downloadable ZIPs under `pool/`.
+
+## Add or update a plugin
+
+Read [TEMPLATE.md](./TEMPLATE.md) for the plugin layout and [CONTRIBUTING.md](./CONTRIBUTING.md) for release rules.
+
+In short: create a directory under `plugins/`, include a valid `manifest.json` and entry point, then push to `main`. GitHub Actions validates the source, builds the versioned ZIP, calculates its SHA-256 and size, and updates the catalog.
+
+**Published versions are immutable.** If you change plugin code or package contents, bump the version in that plugin's manifest. The publisher intentionally fails instead of silently replacing an existing version with different contents.
+
+## Credits and provenance
+
+- **MarkLong0467**: original Valenced port and distribution, including the source repository at [EskimoPlugins](https://github.com/MarkLong0467/EskimoPlugins).
+- **nexpid**: original Revenge plugin implementation/approach, credited in the plugin metadata where applicable; see [RevengePlugins](https://github.com/nexpid/RevengePlugins).
+- **DEVILS1NGH**: changes in this repository, including the Spotify Tools playback fix and community packaging.
+
+Credits identify upstream work; they do not imply that each upstream contributor authored every part of this repository. Plugin-specific notices are kept with the plugin where appropriate.
+
+## Licensing
+
+The root [LICENSE](./LICENSE) is GPL-3.0. Third-party plugins and portions of code may have additional attribution or licence conditions. Check the relevant plugin's source and notices before reusing it; see [CONTRIBUTING.md](./CONTRIBUTING.md).
