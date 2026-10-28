@@ -450,7 +450,7 @@
 			completed = true
 			cleanup()
 			var summary = summarizeFailure(payload)
-			try { console.warn('[Devils Spotify Tools] MESSAGE_SEND_FAILED', summary, activitySnapshot(), payload) } catch (e) {}
+			try { console.warn('[Devils Spotify Tools] MESSAGE_SEND_FAILED', summary, activitySnapshot()) } catch (e) {}
 			toast('Invite failed: ' + summary.slice(0, 145))
 			return payload
 		}
