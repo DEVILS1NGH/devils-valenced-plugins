@@ -31,6 +31,7 @@ jobs:
         run: |
           python3 -m py_compile scripts/*.py
           python3 scripts/materialize_sources.py
+          node --check plugins/spotify-tools/index.js
 
       - name: Check out published repository branch
         uses: actions/checkout@v4
