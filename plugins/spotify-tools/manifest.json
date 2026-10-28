@@ -1,0 +1,23 @@
+{
+  "format": 1,
+  "id": "devils.spotify-tools",
+  "name": "Spotify Tools",
+  "description": "Fixed Listen Along playback and synchronization, plus Spotify invite, song link, and album link options.",
+  "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
+  "contributors": [
+    "MarkLong0467 (https://github.com/MarkLong0467 \"Valenced port and original distribution\")",
+    "nexpid (https://github.com/nexpid/RevengePlugins \"Original Revenge implementation\")"
+  ],
+  "version": "1.0.0",
+  "dependencies": {
+    "valenced.api": {
+      "version": ">=1 <2"
+    },
+    "discord": {
+      "version": "*"
+    }
+  },
+  "dist": {
+    "script": "index.js"
+  }
+}
