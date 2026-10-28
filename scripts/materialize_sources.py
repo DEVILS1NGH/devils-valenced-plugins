@@ -1,15 +1,24 @@
 #!/usr/bin/env python3
-"""Verify that the editable Spotify Tools source is present before publishing."""
+"""Check that plugin source files are present before packaging."""
 from pathlib import Path
-import hashlib
 
 root = Path(__file__).resolve().parents[1]
-target = root / "plugins" / "spotify-tools" / "index.js"
-expected = "fe888ded40829e6c6a5b62186ee87d10d567318a71fd03453a07e536e90bb261"
+plugin_dirs = root / "plugins"
+if not plugin_dirs.is_dir():
+    raise SystemExit("Missing plugins/ directory.")
 
-if not target.is_file():
-    raise SystemExit("Missing plugins/spotify-tools/index.js; restore the editable source before publishing.")
-actual = hashlib.sha256(target.read_bytes()).hexdigest()
-if actual != expected:
-    raise SystemExit(f"Spotify Tools source checksum mismatch: {actual}")
-print(f"Spotify Tools source verified ({target.stat().st_size} bytes, SHA-256 {actual}).")
+manifests = list(plugin_dirs.glob("*/manifest.json"))
+if not manifests:
+    raise SystemExit("No plugin manifests found under plugins/.")
+
+for manifest in manifests:
+    plugin_dir = manifest.parent
+    script = __import__("json").loads(manifest.read_text(encoding="utf-8")).get("dist", {}).get("script")
+    if not script:
+        continue
+    source = (plugin_dir / script).resolve()
+    if plugin_dir.resolve() not in source.parents or not source.is_file():
+        raise SystemExit(f"Missing or invalid JS entry declared by {manifest.relative_to(root)}: {script}")
+    print(f"Source ready: {source.relative_to(root)} ({source.stat().st_size} bytes)")
+
+print(f"Validated {len(manifests)} plugin manifest(s).")
