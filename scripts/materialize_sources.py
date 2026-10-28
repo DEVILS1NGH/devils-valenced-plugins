@@ -1,40 +1,45 @@
 #!/usr/bin/env python3
-"""Decode the initial compressed source snapshot into its normal editable JS file."""
+"""One-time bootstrap from chunked compressed source to a normal editable JS file."""
 from pathlib import Path
-import base64, gzip, hashlib
+import base64, gzip, hashlib, shutil
 
 root = Path(__file__).resolve().parents[1]
-encoded = root / ".sources" / "spotify-tools-index.js.gz.b64"
 target = root / "plugins" / "spotify-tools" / "index.js"
-expected = "fe888ded40829e6c6a5b62186ee87d10d567318a71fd03453a07e536e90bb261"
+transfer = root / ".source-transfer"
+bootstrap = root / ".sources"
+expected_source = "fe888ded40829e6c6a5b62186ee87d10d567318a71fd03453a07e536e90bb261"
+expected_chunks = [
+    "afd79b54d22478c5f6100b346c3c30f8b3532b52566c10e42b0b1021d849f679",
+    "a4bf18dad01e7c4301eff0dd1f14430ab5a72a940e4b4ae17e9b740055f25031",
+    "a70ac17409f0ea4676ee854e0a90cf9d899416767e5657d805a1215802b2a9dc",
+    "0d36d79dbe683ea6b9e7d4e76c584932d93905fcefb07120918c0f9d73c54f43",
+    "9c8cc4a08b062064c2466a93c141924a2b2826428bcff418f224f523e3856506",
+    "c0277daf97f35eb0d3bc973eec7f092c61e38353095f4fbebf1a86738b7dfc11",
+]
 
-if encoded.exists():
-    text = "".join(encoded.read_text(encoding="ascii").split())
-    source = None
-    try:
-        source = gzip.decompress(base64.b64decode(text, validate=True))
-    except Exception:
-        # One character was accidentally duplicated in the initial transfer. Repair only if
-        # deleting exactly one character yields the expected SHA-256 source; never guess silently.
-        if len(text) % 4 == 1:
-            for i in range(len(text)):
-                candidate = text[:i] + text[i + 1:]
-                try:
-                    decoded = gzip.decompress(base64.b64decode(candidate, validate=True))
-                except Exception:
-                    continue
-                if hashlib.sha256(decoded).hexdigest() == expected:
-                    source = decoded
-                    print(f"Repaired one surplus character in source bootstrap at offset {i}.")
-                    break
-    if source is None:
-        raise SystemExit("Could not decode Spotify Tools source bootstrap safely.")
-    actual = hashlib.sha256(source).hexdigest()
-    if actual != expected:
-        raise SystemExit(f"Spotify Tools source bootstrap checksum mismatch: {actual}")
+if target.is_file() and not transfer.exists():
+    print("Plugin source already exists; leaving editable source untouched.")
+elif transfer.exists():
+    pieces = []
+    for i, expected in enumerate(expected_chunks):
+        part_path = transfer / f"{i:02d}.txt"
+        if not part_path.is_file():
+            raise SystemExit(f"Missing source transfer chunk: {part_path.name}")
+        piece = part_path.read_text(encoding="ascii").strip()
+        actual = hashlib.sha256(piece.encode("ascii")).hexdigest()
+        if actual != expected:
+            raise SystemExit(f"Source chunk {i:02d} checksum mismatch: {actual}")
+        pieces.append(piece)
+    source = gzip.decompress(base64.b64decode("".join(pieces), validate=True))
+    actual_source = hashlib.sha256(source).hexdigest()
+    if actual_source != expected_source:
+        raise SystemExit(f"Materialized source checksum mismatch: {actual_source}")
     target.parent.mkdir(parents=True, exist_ok=True)
-    if not target.exists() or target.read_bytes() != source:
-        target.write_bytes(source)
-        print(f"Materialized {target.relative_to(root)} ({len(source)} bytes)")
-    else:
-        print("Spotify Tools source is already materialized.")
+    target.write_bytes(source)
+    print(f"Materialized editable source: {target.relative_to(root)} ({len(source)} bytes)")
+    # Remove one-time transfer payloads; keep only readable JS in the actual repository.
+    shutil.rmtree(transfer)
+    if bootstrap.exists():
+        shutil.rmtree(bootstrap)
+else:
+    raise SystemExit("Plugin source is missing, and no one-time source transfer is available.")
