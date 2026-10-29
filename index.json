@@ -8,13 +8,26 @@
       "description": "Continuous Listen Along resync on remote Spotify track changes, playback fix, original invite flow, plus song and album links.",
       "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
       "channels": {
-        "latest": "1.0.6"
+        "latest": "1.0.7"
       },
       "versions": {
         "1.0.6": {
           "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.6.zip",
           "sha256": "f820831792f434090195763a000d2aadb007242779a41346fb7b5735fcd6ad49",
           "size": 21426,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "1.0.7": {
+          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.7.zip",
+          "sha256": "e744e8fca57738e46c1dde2a216b771c103948684445640a8fb52e002e1369d6",
+          "size": 21552,
           "dependencies": {
             "valenced.api": {
               "version": ">=1 <2"
