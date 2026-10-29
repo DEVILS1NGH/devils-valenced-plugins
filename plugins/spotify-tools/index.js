@@ -49,21 +49,27 @@
 	/** Runs only after Discord actually reports a Spotify player-state change. */
 	function onceAfterPlayerState(callback) {
 		var off
+		var fallbackTimer
 		var done = false
 		function finish(payload) {
 			if (!done) {
 				done = true
 				if (off) { try { off() } catch (e) {} }
+				if (fallbackTimer) clearTimeout(fallbackTimer)
 				// Dispatch hooks run before stores finish processing; defer sync until this tick ends.
 				setTimeout(callback, 0)
 			}
 			return payload
 		}
 		off = valenced.discord.flux.onFluxEventDispatched('SPOTIFY_PLAYER_STATE', finish)
+		// Some clients change Spotify state without emitting this Flux event. Never leave the native
+		// play/sync handshake waiting forever; perform one guarded sync after a short fallback delay.
+		fallbackTimer = setTimeout(function () { finish() }, 1200)
 		return function cancel() {
 			if (done) return
 			done = true
 			if (off) { try { off() } catch (e) {} }
+			if (fallbackTimer) clearTimeout(fallbackTimer)
 		}
 	}
 
@@ -152,28 +158,29 @@
 
 	function syncFollowedActivity(activity, userId) {
 		var actions = findSpotifyActions()
+		if (!actions) {
+			toast('Discord native Spotify sync controls are unavailable. Cannot rejoin the Listen Along session.')
+			return
+		}
 
-		// Discord's native session can stop following at a track boundary while local Spotify
-		// continues its own album queue. Explicitly start the newly reported track at its current
-		// position. This is a per-transition recovery action, not the initial join path.
-		playThroughSpotify(activity, true).then(function (apiResult) {
-			if (apiResult === true) return
-			// If Spotify's Web API isn't available or rejects the command, fall back to Discord's
-			// native action path, which can still recover on clients where the integration works.
-			if (!actions) {
-				if (apiResult === null) toast('Could not resync the next song: Spotify playback access is unavailable.')
-				return
-			}
-			try {
-				Promise.resolve(listenWithDiscordActions(actions, activity, userId)).then(function (ok) {
-					if (ok === false) toast('Could not resync the next song. Discord did not accept the native sync.')
-				}, function (e) {
-					toast('Could not resync the next song: ' + String((e && e.message) || e))
-				})
-			} catch (e) {
-				toast('Could not resync the next song: ' + String((e && e.message) || e))
+		// Do not use the Spotify Web API here. It can start a track on our own account, but it
+		// cannot establish Discord's native Listen Along relationship with the other listener.
+		// Re-run Discord's native play -> player-state -> sync handshake to recover that relationship.
+		var cancelSync = onceAfterPlayerState(function () {
+			try { actionSucceeded(actions.sync(activity, userId)) }
+			catch (e) {
+				toast('Could not rejoin Listen Along: ' + String((e && e.message) || e))
 			}
 		})
+		try {
+			Promise.resolve(actions.play(activity, userId)).catch(function (e) {
+				cancelSync()
+				toast('Could not restart native Listen Along: ' + String((e && e.message) || e))
+			})
+		} catch (e) {
+			cancelSync()
+			toast('Could not restart native Listen Along: ' + String((e && e.message) || e))
+		}
 	}
 
 	function refreshFollowedActivity() {

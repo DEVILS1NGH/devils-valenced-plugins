@@ -2,17 +2,18 @@
 
 A Valenced plugin that adds a Listen Along button to Spotify activity cards, plus Spotify invite, song-link, and album-link options.
 
-## Current version: 1.0.8
+## Current version: 1.0.9
 
-- Uses Discord's native Listen Along `play`/`sync` controls for the initial join.
+- Uses Discord's native `play()` and `sync()` actions for Listen Along.
 - Watches Discord presence updates and polls the followed listener's stored activity every three seconds.
-- When a new remote track is detected, explicitly starts that track at the reported position through Spotify's Web API, using album context to avoid the known bare-track playback issue.
-- Falls back to Discord's native sync path if the Spotify playback API cannot complete the track-change recovery.
-- Preserves the original MarkLong Valenced invite flow, song/album links, and the existing playback fixes.
+- On a remote track change, repeats Discord's native play → player-state → sync handshake to rejoin the listening session.
+- Includes a guarded 1.2-second fallback for mobile clients that update playback without emitting `SPOTIFY_PLAYER_STATE`.
+- Does not use Spotify Web API playback to recover a remote track change: that API can start playback on the local account but cannot establish Discord's native Listen Along relationship with another user.
+- Preserves the original MarkLong Valenced invite flow, song/album links, and playback fixes.
 
 ## Known limitation
 
-Recovery depends on Discord exposing the followed listener's new Spotify activity. If Discord's presence stays stale or stops updating, no plugin can know which track to follow until that activity refreshes.
+The recovery requires Discord to expose the followed person's updated Spotify activity and for Discord's native sync action to work. It cannot recover if Discord itself stops reporting the other listener's activity or rejects native Listen Along.
 
 ## Credits
 
