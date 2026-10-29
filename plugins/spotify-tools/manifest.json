@@ -2,13 +2,13 @@
   "format": 1,
   "id": "devils.spotify-tools",
   "name": "Spotify Tools",
-  "description": "Listen Along playback/synchronization fix, with the original Valenced Spotify invite implementation preserved, plus song and album links.",
+  "description": "Continuous Listen Along tracking using Discord's native sync, playback fix, original invite flow, plus song and album links.",
   "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
   "contributors": [
     "MarkLong0467 (https://github.com/MarkLong0467 \"Valenced port and original distribution\")",
     "nexpid (https://github.com/nexpid/RevengePlugins \"Original Revenge implementation\")"
   ],
-  "version": "1.0.3",
+  "version": "1.0.4",
   "dependencies": {
     "valenced.api": {
       "version": ">=1 <2"

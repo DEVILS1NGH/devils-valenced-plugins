@@ -3,9 +3,8 @@
 	 * Spotify Tools for Valenced: Listen Along plus Spotify invite/song/album send options.
 	 * Based on nexpid's NexxUtils for Revenge (CC BY 4.0), then ported to Valenced by MarkLong0467.
 	 * Modified on 2026-10-29. This modified build remains under GPL-3.0.
- * Patched: only select the real play+sync action module, never fall back to a second playback
-	 * mechanism after an internal playback action has begun, and always clean up/fallback the one-shot
-	 * player-state listener so sync is not silently skipped on clients that omit the expected event.
+ * Patched: prefer Discord's native play/sync controls for continuous Listen Along tracking.
+	 * Spotify Web API playback is only a last-resort fallback when Discord's native controls are absent.
 	 * Keep `(function` as the first thing in this file: Valenced loads it as `return <file>`.
 	 */
 	var TOAST = 'ESKIMO_SPOTIFY_TOOLS'
@@ -232,8 +231,8 @@
 	}
 
 	/**
-	 * Returns true/false if it sent a Web API playback command, or null if the API route is unavailable
-	 * and the caller should use Discord's native play/sync actions instead.
+	 * Last-resort single-track playback fallback for clients where Discord's native play/sync controls
+	 * cannot be found. This cannot track later song changes; native Discord sync must be preferred.
 	 */
 	async function playThroughSpotify(activity) {
 		var commandStarted = false
@@ -326,12 +325,21 @@
 	function listen(reason, activity, userId) {
 		if (typeof reason === 'string') { toast(reason); return false }
 		var actions = findSpotifyActions()
-		// Spotify's bare-track Web API command is currently known to stop playback without starting
-		// the requested song on affected clients. Try the album-context workaround before Discord's
-		// native action path; never issue the bare-track request.
+
+		// Match NexxUtils' original behavior: Discord's native sync(activity, userId) is what keeps
+		// following the other listener when their song changes. Starting the current song through
+		// Spotify's Web API alone only syncs this one track, then our player follows its own queue.
+		if (actions) return listenWithDiscordActions(actions, activity, userId)
+
+		// Last resort only: some clients may not expose Discord's native controls. This can start the
+		// current track, but cannot provide continuous Listen Along tracking across song changes.
 		return playThroughSpotify(activity).then(function (apiResult) {
-			if (apiResult !== null) return apiResult
-			return listenWithDiscordActions(actions, activity, userId)
+			if (apiResult === null) {
+				toast('Discord Spotify sync controls were not found. Continuous Listen Along sync is unavailable on this client.')
+				return false
+			}
+			if (apiResult === true) toast('Started the current track, but continuous sync is unavailable on this client.')
+			return apiResult
 		}, function (e) {
 			toast('Listen along failed: ' + String((e && e.message) || e))
 			return false
