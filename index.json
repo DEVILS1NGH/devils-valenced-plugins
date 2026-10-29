@@ -5,25 +5,12 @@
   "plugins": {
     "devils.spotify-tools": {
       "name": "Spotify Tools",
-      "description": "Continuous Listen Along resync on remote Spotify track changes via presence events and polling, playback fix, original invite flow, plus song and album links.",
+      "description": "Continuous Listen Along recovery at track changes via presence monitoring and explicit Spotify playback, with the original invite flow and song/album links.",
       "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
       "channels": {
         "latest": "1.0.8"
       },
       "versions": {
-        "1.0.7": {
-          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.7.zip",
-          "sha256": "e744e8fca57738e46c1dde2a216b771c103948684445640a8fb52e002e1369d6",
-          "size": 21552,
-          "dependencies": {
-            "valenced.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
         "1.0.8": {
           "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.8.zip",
           "sha256": "d3931b05d1c42db6fd99d1c8da225e803fab3d9947433603749b28ff52b40f67",
