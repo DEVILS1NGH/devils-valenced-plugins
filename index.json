@@ -5,81 +5,16 @@
   "plugins": {
     "devils.spotify-tools": {
       "name": "Spotify Tools",
-      "description": "Fixed Listen Along playback and synchronization, plus Spotify invite, song link, and album link options.",
+      "description": "Listen Along playback/synchronization fix, with the original Valenced Spotify invite implementation preserved, plus song and album links.",
       "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
       "channels": {
-        "latest": "1.0.5"
+        "latest": "1.0.3"
       },
       "versions": {
-        "1.0.0": {
-          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.0.zip",
-          "sha256": "0b7554ff053f67380b67f4e8b31f6198c0ebab63db46e2cc79db6da7869352f2",
-          "size": 20515,
-          "dependencies": {
-            "valenced.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "1.0.1": {
-          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.1.zip",
-          "sha256": "974f38e176221a17c170f0769b084ab26fa1e8c1eb1cf83ab8ad19fc1034bc9c",
-          "size": 21094,
-          "dependencies": {
-            "valenced.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "1.0.2": {
-          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.2.zip",
-          "sha256": "8576dfb32ad4b7e184d9521d4f803c2d982f71f3ae85a1bb5d3f03225fce14e2",
-          "size": 21029,
-          "dependencies": {
-            "valenced.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
         "1.0.3": {
           "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.3.zip",
           "sha256": "c3ac96f8e0fd168e676abd7e12a83a1aa7ea903e53858702da7f4399c269ff72",
           "size": 20604,
-          "dependencies": {
-            "valenced.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "1.0.4": {
-          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.4.zip",
-          "sha256": "37052e90bb89679fbdf8b7689d4f1ba9ce3a5dd4e89ee959f150b9e86f9d58f9",
-          "size": 21561,
-          "dependencies": {
-            "valenced.api": {
-              "version": ">=1 <2"
-            },
-            "discord": {
-              "version": "*"
-            }
-          }
-        },
-        "1.0.5": {
-          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.5.zip",
-          "sha256": "7527b176a87a11b7b86128bd712d4325232f4299e40e9684dad3bcf0c89ce40b",
-          "size": 21563,
           "dependencies": {
             "valenced.api": {
               "version": ">=1 <2"
