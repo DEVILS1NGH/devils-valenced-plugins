@@ -20,6 +20,7 @@
 	var spotifyActions
 	var activeFollow
 	var followRefreshTimer
+	var followPollTimer
 	var PLUS_LABELS = { Camera: 1, Photos: 1, Poll: 1, Files: 1, Apps: 1 }
 
 	function finders() { return valenced.modules.finders }
@@ -432,12 +433,18 @@
 			// changes to a new track. This recovers if the one-time Listen Along session drops.
 			var follow = { userId: userId, signature: activitySignature(activity) }
 			activeFollow = follow
+			// Poll as a fallback because some mobile clients can miss or delay a presence event.
+			if (!followPollTimer) followPollTimer = setInterval(refreshFollowedActivity, 3000)
 			var started = listenWithDiscordActions(actions, activity, userId)
+			function stopIfFailed() {
+				if (activeFollow !== follow) return
+				activeFollow = undefined
+				if (followPollTimer) clearInterval(followPollTimer)
+				followPollTimer = undefined
+			}
 			Promise.resolve(started).then(function (ok) {
-				if (ok === false && activeFollow === follow) activeFollow = undefined
-			}, function () {
-				if (activeFollow === follow) activeFollow = undefined
-			})
+				if (ok === false) stopIfFailed()
+			}, stopIfFailed)
 			return started
 		}
 
@@ -657,6 +664,8 @@
 				activeFollow = undefined
 				if (followRefreshTimer) clearTimeout(followRefreshTimer)
 				followRefreshTimer = undefined
+				if (followPollTimer) clearInterval(followPollTimer)
+				followPollTimer = undefined
 			})
 			;['SpotifyPlayButton', 'PlayOnSpotifyButton'].forEach(function (name) {
 				cleanup(f.getModules(f.filters.withProps(name), function (module) { patchComponent(module, name, decorateListen, cleanup) }))
