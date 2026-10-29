@@ -8,13 +8,26 @@
       "description": "Continuous Listen Along tracking using Discord's native sync, playback fix, original invite flow, plus song and album links.",
       "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
       "channels": {
-        "latest": "1.0.4"
+        "latest": "1.0.6"
       },
       "versions": {
         "1.0.4": {
           "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.4.zip",
           "sha256": "ea7e7fdf3bb05c3eb1d6f7171c00dbd9fa128ba7a7ae0985e8ab2e2b77bb2854",
           "size": 20677,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "1.0.6": {
+          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.6.zip",
+          "sha256": "f820831792f434090195763a000d2aadb007242779a41346fb7b5735fcd6ad49",
+          "size": 21426,
           "dependencies": {
             "valenced.api": {
               "version": ">=1 <2"
