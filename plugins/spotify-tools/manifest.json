@@ -2,13 +2,13 @@
   "format": 1,
   "id": "devils.spotify-tools",
   "name": "Spotify Tools",
-  "description": "Continuous Listen Along resync on remote Spotify track changes via presence events and polling, playback fix, original invite flow, plus song and album links.",
+  "description": "Continuous Listen Along resync on remote Spotify track changes via presence monitoring and explicit track playback recovery, plus original invite flow and song/album links.",
   "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
   "contributors": [
     "MarkLong0467 (https://github.com/MarkLong0467 \"Valenced port and original distribution\")",
     "nexpid (https://github.com/nexpid/RevengePlugins \"Original Revenge implementation\")"
   ],
-  "version": "1.0.7",
+  "version": "1.0.8",
   "dependencies": {
     "valenced.api": {
       "version": ">=1 <2"

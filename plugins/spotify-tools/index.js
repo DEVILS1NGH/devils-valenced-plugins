@@ -152,37 +152,28 @@
 
 	function syncFollowedActivity(activity, userId) {
 		var actions = findSpotifyActions()
-		if (!actions) return
-		var spotify = store('SpotifyStore')
-		var mine = spotify && spotify.getActivity && spotify.getActivity()
-		if (mine) {
-			try {
-				Promise.resolve(actions.sync(activity, userId)).catch(function (e) {
-					toast('Could not resync the next song: ' + String((e && e.message) || e))
-				})
-			} catch (e) {
-				toast('Could not resync the next song: ' + String((e && e.message) || e))
+
+		// Discord's native session can stop following at a track boundary while local Spotify
+		// continues its own album queue. Explicitly start the newly reported track at its current
+		// position. This is a per-transition recovery action, not the initial join path.
+		playThroughSpotify(activity, true).then(function (apiResult) {
+			if (apiResult === true) return
+			// If Spotify's Web API isn't available or rejects the command, fall back to Discord's
+			// native action path, which can still recover on clients where the integration works.
+			if (!actions) {
+				if (apiResult === null) toast('Could not resync the next song: Spotify playback access is unavailable.')
+				return
 			}
-			return
-		}
-		var cancelSync = onceAfterPlayerState(function () {
 			try {
-				Promise.resolve(actions.sync(activity, userId)).catch(function (e) {
+				Promise.resolve(listenWithDiscordActions(actions, activity, userId)).then(function (ok) {
+					if (ok === false) toast('Could not resync the next song. Discord did not accept the native sync.')
+				}, function (e) {
 					toast('Could not resync the next song: ' + String((e && e.message) || e))
 				})
 			} catch (e) {
 				toast('Could not resync the next song: ' + String((e && e.message) || e))
 			}
 		})
-		try {
-			Promise.resolve(actions.play(activity, userId)).catch(function (e) {
-				cancelSync()
-				toast('Could not start the next song: ' + String((e && e.message) || e))
-			})
-		} catch (e) {
-			cancelSync()
-			toast('Could not start the next song: ' + String((e && e.message) || e))
-		}
 	}
 
 	function refreshFollowedActivity() {
@@ -333,10 +324,10 @@
 	}
 
 	/**
-	 * Last-resort single-track playback fallback for clients where Discord's native play/sync controls
-	 * cannot be found. This cannot track later song changes; native Discord sync must be preferred.
+	 * Start a specific remote track at the listener's current position using album context.
+	 * Used to recover when a native Listen Along session stops following after a track transition.
 	 */
-	async function playThroughSpotify(activity) {
+	async function playThroughSpotify(activity, silent) {
 		var commandStarted = false
 		try {
 			var access = await spotifyAccess()
@@ -364,7 +355,7 @@
 				var why = { 401: 'Spotify sign-in expired. Open Spotify and try again.', 403: 'Spotify Premium or playback permission is required to listen along.', 404: 'Spotify could not find the active playback device. Open Spotify and play a song first.', 429: 'Spotify is busy. Try again in a moment.' }[res.status]
 				throw new Error(why || 'Spotify said no (' + res.status + ').')
 			}
-			toast('Listening along')
+			if (!silent) toast('Listening along')
 			return true
 		} catch (e) {
 			if (!commandStarted) return null
