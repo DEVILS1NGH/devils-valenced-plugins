@@ -2,13 +2,13 @@
   "format": 1,
   "id": "devils.spotify-tools",
   "name": "Spotify Tools",
-  "description": "Native Discord Listen Along rejoin on remote Spotify track changes, plus playback fixes, original invite flow, and song/album links.",
+  "description": "Native Discord Listen Along rejoin on track changes, watching both updated activity-card props and one-second presence polling, plus invite and song/album links.",
   "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
   "contributors": [
     "MarkLong0467 (https://github.com/MarkLong0467 \"Valenced port and original distribution\")",
     "nexpid (https://github.com/nexpid/RevengePlugins \"Original Revenge implementation\")"
   ],
-  "version": "1.0.9",
+  "version": "1.0.10",
   "dependencies": {
     "valenced.api": {
       "version": ">=1 <2"

@@ -183,21 +183,31 @@
 		}
 	}
 
+	function observeFollowedActivity(activity, source) {
+		var follow = activeFollow
+		if (!follow || !activity || String(follow.userId) !== String(userIdOf(activity))) return
+		var signature = activitySignature(activity)
+		if (!signature || signature === follow.signature) return
+		follow.signature = signature
+		follow.activity = activity
+		var title = String(activity.details || activity.state || 'new track').slice(0, 70)
+		// This transition toast deliberately confirms the watcher saw a new track before rejoining.
+		toast('Track changed: ' + title + '. Rejoining Listen Along.')
+		try { console.info('[Spotify Tools] Remote Spotify track changed', { source: source, title: title, hasSyncId: !!activity.sync_id }) } catch (e) {}
+		syncFollowedActivity(activity, follow.userId)
+	}
+
 	function refreshFollowedActivity() {
 		var follow = activeFollow
 		if (!follow) return
 		var latest = spotifyActivityForUser(follow.userId)
 		if (!latest) {
-			// Some clients briefly remove Spotify presence between tracks. Keep following but
-			// allow the next Spotify activity, even if it repeats the same song, to trigger sync.
+			// Some clients briefly remove Spotify presence between tracks. Permit the next activity
+			// to trigger a rejoin even if Discord reuses the same song payload.
 			follow.signature = ''
 			return
 		}
-		var signature = activitySignature(latest)
-		if (signature === follow.signature) return
-		follow.signature = signature
-		if (follow.userId !== userIdOf(latest)) return
-		syncFollowedActivity(latest, follow.userId)
+		observeFollowedActivity(latest, 'presence-store')
 	}
 
 	function onPresenceUpdates(payload) {
@@ -432,7 +442,7 @@
 			var follow = { userId: userId, signature: activitySignature(activity) }
 			activeFollow = follow
 			// Poll as a fallback because some mobile clients can miss or delay a presence event.
-			if (!followPollTimer) followPollTimer = setInterval(refreshFollowedActivity, 3000)
+			if (!followPollTimer) followPollTimer = setInterval(refreshFollowedActivity, 1000)
 			var started = listenWithDiscordActions(actions, activity, userId)
 			function stopIfFailed() {
 				if (activeFollow !== follow) return
@@ -472,6 +482,11 @@
 				return payload
 			})
 		}, [])
+		// React activity cards receive updated props as Discord's presence refreshes. Observe them
+		// directly as well as the store poll, since the mobile profile can render fresher activity data.
+		React.useEffect(function () {
+			observeFollowedActivity(props.activity, 'activity-card')
+		})
 		var activity = props.activity
 		var userId = userIdOf(activity)
 		var reason = userId ? disabledReason(activity, userId) : 'No listener found'

@@ -18,7 +18,7 @@ After adding it, open the plugin browser to install the available plugin.
 
 | Plugin | ID | Current version | Description |
 | --- | --- | --- | --- |
-| Spotify Tools | `devils.spotify-tools` | 1.0.9 | Native Listen Along rejoin on track changes, original invite flow, plus song and album links. |
+| Spotify Tools | `devils.spotify-tools` | 1.0.10 | Native Listen Along rejoin using activity-card updates and one-second polling. |
 
 The published catalog on `gh-pages` is generated from the plugin manifest and versioned ZIP in `pool/`.
 

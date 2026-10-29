@@ -2,18 +2,23 @@
 
 A Valenced plugin that adds a Listen Along button to Spotify activity cards, plus Spotify invite, song-link, and album-link options.
 
-## Current version: 1.0.9
+## Current version: 1.0.10
 
 - Uses Discord's native `play()` and `sync()` actions for Listen Along.
-- Watches Discord presence updates and polls the followed listener's stored activity every three seconds.
-- On a remote track change, repeats Discord's native play → player-state → sync handshake to rejoin the listening session.
-- Includes a guarded 1.2-second fallback for mobile clients that update playback without emitting `SPOTIFY_PLAYER_STATE`.
-- Does not use Spotify Web API playback to recover a remote track change: that API can start playback on the local account but cannot establish Discord's native Listen Along relationship with another user.
-- Preserves the original MarkLong Valenced invite flow, song/album links, and playback fixes.
+- Watches Discord presence updates and polls the followed listener's activity every second.
+- Also observes updated Spotify activity-card props, so it does not rely solely on the possibly stale PresenceStore result.
+- When a new track is detected, shows a transition toast and repeats Discord's native play → player-state → sync handshake.
+- Includes a guarded 1.2-second fallback for clients that update playback without emitting `SPOTIFY_PLAYER_STATE`.
+- Does not use Spotify Web API playback to recover track changes; it preserves Discord's native Listen Along relationship instead.
+- Preserves the original MarkLong Valenced invite flow, song/album links, and existing playback fixes.
+
+## Diagnostic behavior
+
+A toast reading `Track changed: … Rejoining Listen Along.` confirms that the current client detected the remote activity change and attempted a native rejoin. If that toast never appears at the next song, the client did not expose a changed activity to either watcher.
 
 ## Known limitation
 
-The recovery requires Discord to expose the followed person's updated Spotify activity and for Discord's native sync action to work. It cannot recover if Discord itself stops reporting the other listener's activity or rejects native Listen Along.
+Recovery still requires Discord to expose the followed person's updated Spotify activity and accept the native play/sync actions. Discord's own Spotify FAQ describes Listen Along as a native integration and documents known mobile/crossfade limitations.
 
 ## Credits
 
