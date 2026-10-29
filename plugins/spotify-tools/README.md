@@ -2,13 +2,13 @@
 
 A Valenced plugin that adds a Listen Along button to Spotify activity cards, plus Spotify invite, song-link, and album-link options.
 
-## Current version: 1.0.4
+## Current version: 1.0.6
 
 - Uses Discord's native Listen Along `play`/`sync` controls first, matching NexxUtils' original behavior.
-- Keeps tracking the other listener across song changes instead of starting one track and following your own album queue.
-- Preserves the playback/synchronization fixes and the original MarkLong Valenced invite implementation.
-- Keeps song and album link options.
-- Does not include the temporary send-failure diagnostic code from 1.0.5.
+- Watches Discord presence updates for the followed listener and re-syncs when their Spotify track changes.
+- Re-reads the target activity from the presence store rather than reusing stale button props.
+- Preserves the playback fixes, the original MarkLong Valenced invite flow, and song/album links.
+- If the client does not expose Discord's native controls, the Web API fallback can start a track but cannot provide continuous tracking.
 
 ## Credits
 

@@ -18,6 +18,8 @@
 
 	var storage
 	var spotifyActions
+	var activeFollow
+	var followRefreshTimer
 	var PLUS_LABELS = { Camera: 1, Photos: 1, Poll: 1, Files: 1, Apps: 1 }
 
 	function finders() { return valenced.modules.finders }
@@ -115,6 +117,105 @@
 	function userIdOf(activity) {
 		var id = activity && activity.party && activity.party.id
 		return typeof id === 'string' && id.indexOf(':') > 0 ? id.split(':')[1] : undefined
+	}
+
+	/** Read the latest Spotify activity from Discord's presence store, not the stale card props. */
+	function spotifyActivityForUser(userId) {
+		try {
+			var presence = store('PresenceStore')
+			var list = (presence && presence.getActivities && presence.getActivities(userId)) || []
+			for (var i = 0; i < list.length; i++) {
+				var a = list[i]
+				if (a && a.party && a.party.id && (
+					a.type === 2 && (a.name === 'Spotify' || String(a.id || '').indexOf('spotify') === 0 ||
+						String(a.party.id || '').indexOf('spotify:') === 0)
+				)) return a
+			}
+		} catch (e) {}
+		return undefined
+	}
+
+	/** Track changes in the remote activity even if Discord's native Listen Along session drops. */
+	function activitySignature(activity) {
+		var meta = (activity && activity.metadata) || {}
+		var timestamps = (activity && activity.timestamps) || {}
+		return [
+			(activity && activity.party && activity.party.id) || '',
+			(activity && activity.sync_id) || '',
+			timestamps.start || '',
+			(activity && activity.details) || '',
+			(activity && activity.state) || '',
+			meta.track_id || meta.trackId || meta.album_id || meta.context_uri || '',
+		].join('|')
+	}
+
+	function syncFollowedActivity(activity, userId) {
+		var actions = findSpotifyActions()
+		if (!actions) return
+		var spotify = store('SpotifyStore')
+		var mine = spotify && spotify.getActivity && spotify.getActivity()
+		if (mine) {
+			try {
+				Promise.resolve(actions.sync(activity, userId)).catch(function (e) {
+					toast('Could not resync the next song: ' + String((e && e.message) || e))
+				})
+			} catch (e) {
+				toast('Could not resync the next song: ' + String((e && e.message) || e))
+			}
+			return
+		}
+		var cancelSync = onceAfterPlayerState(function () {
+			try {
+				Promise.resolve(actions.sync(activity, userId)).catch(function (e) {
+					toast('Could not resync the next song: ' + String((e && e.message) || e))
+				})
+			} catch (e) {
+				toast('Could not resync the next song: ' + String((e && e.message) || e))
+			}
+		})
+		try {
+			Promise.resolve(actions.play(activity, userId)).catch(function (e) {
+				cancelSync()
+				toast('Could not start the next song: ' + String((e && e.message) || e))
+			})
+		} catch (e) {
+			cancelSync()
+			toast('Could not start the next song: ' + String((e && e.message) || e))
+		}
+	}
+
+	function refreshFollowedActivity() {
+		var follow = activeFollow
+		if (!follow) return
+		var latest = spotifyActivityForUser(follow.userId)
+		if (!latest) {
+			// Some clients briefly remove Spotify presence between tracks. Keep following but
+			// allow the next Spotify activity, even if it repeats the same song, to trigger sync.
+			follow.signature = ''
+			return
+		}
+		var signature = activitySignature(latest)
+		if (signature === follow.signature) return
+		follow.signature = signature
+		if (follow.userId !== userIdOf(latest)) return
+		syncFollowedActivity(latest, follow.userId)
+	}
+
+	function onPresenceUpdates(payload) {
+		var follow = activeFollow
+		if (!follow) return payload
+		var updates = payload && (payload.updates || payload.presences || payload.presenceUpdates)
+		if (Array.isArray(updates) && !updates.some(function (u) {
+			var id = u && (u.userId || u.user_id || (u.user && u.user.id))
+			return id && String(id) === String(follow.userId)
+		})) return payload
+		if (followRefreshTimer) clearTimeout(followRefreshTimer)
+		// Flux listeners can run before stores apply the new presence. Read the store next tick.
+		followRefreshTimer = setTimeout(function () {
+			followRefreshTimer = undefined
+			refreshFollowedActivity()
+		}, 50)
+		return payload
 	}
 	function currentTrack() {
 		var spotify = store('SpotifyStore')
@@ -326,13 +427,21 @@
 		if (typeof reason === 'string') { toast(reason); return false }
 		var actions = findSpotifyActions()
 
-		// Match NexxUtils' original behavior: Discord's native sync(activity, userId) is what keeps
-		// following the other listener when their song changes. Starting the current song through
-		// Spotify's Web API alone only syncs this one track, then our player follows its own queue.
-		if (actions) return listenWithDiscordActions(actions, activity, userId)
+		if (actions) {
+			// Keep a live target so we can re-run Discord's native sync when its Spotify activity
+			// changes to a new track. This recovers if the one-time Listen Along session drops.
+			var follow = { userId: userId, signature: activitySignature(activity) }
+			activeFollow = follow
+			var started = listenWithDiscordActions(actions, activity, userId)
+			Promise.resolve(started).then(function (ok) {
+				if (ok === false && activeFollow === follow) activeFollow = undefined
+			}, function () {
+				if (activeFollow === follow) activeFollow = undefined
+			})
+			return started
+		}
 
-		// Last resort only: some clients may not expose Discord's native controls. This can start the
-		// current track, but cannot provide continuous Listen Along tracking across song changes.
+		// Last resort only: this can play one track, but can't keep following future track changes.
 		return playThroughSpotify(activity).then(function (apiResult) {
 			if (apiResult === null) {
 				toast('Discord Spotify sync controls were not found. Continuous Listen Along sync is unavailable on this client.')
@@ -543,6 +652,12 @@
 			var cleanup = api.cleanup
 			storage = api.jsonStorage
 			var f = finders()
+			cleanup(valenced.discord.flux.onFluxEventDispatched('PRESENCE_UPDATES', onPresenceUpdates))
+			cleanup(function () {
+				activeFollow = undefined
+				if (followRefreshTimer) clearTimeout(followRefreshTimer)
+				followRefreshTimer = undefined
+			})
 			;['SpotifyPlayButton', 'PlayOnSpotifyButton'].forEach(function (name) {
 				cleanup(f.getModules(f.filters.withProps(name), function (module) { patchComponent(module, name, decorateListen, cleanup) }))
 			})

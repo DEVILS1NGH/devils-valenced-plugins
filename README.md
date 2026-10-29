@@ -18,7 +18,7 @@ After adding it, open the plugin browser to install the available plugin.
 
 | Plugin | ID | Current version | Description |
 | --- | --- | --- | --- |
-| Spotify Tools | `devils.spotify-tools` | 1.0.4 | Continuous Listen Along tracking, original Spotify invite flow, plus song and album links. |
+| Spotify Tools | `devils.spotify-tools` | 1.0.6 | Continuous Listen Along resync on track changes, original invite flow, plus song and album links. |
 
 The published catalog on `gh-pages` is generated from the plugin manifest and versioned ZIP in `pool/`.
 
