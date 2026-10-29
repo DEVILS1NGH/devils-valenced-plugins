@@ -8,13 +8,26 @@
       "description": "Listen Along playback/synchronization fix, with the original Valenced Spotify invite implementation preserved, plus song and album links.",
       "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
       "channels": {
-        "latest": "1.0.3"
+        "latest": "1.0.4"
       },
       "versions": {
         "1.0.3": {
           "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.3.zip",
           "sha256": "c3ac96f8e0fd168e676abd7e12a83a1aa7ea903e53858702da7f4399c269ff72",
           "size": 20604,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
+        "1.0.4": {
+          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.4.zip",
+          "sha256": "ea7e7fdf3bb05c3eb1d6f7171c00dbd9fa128ba7a7ae0985e8ab2e2b77bb2854",
+          "size": 20677,
           "dependencies": {
             "valenced.api": {
               "version": ">=1 <2"
