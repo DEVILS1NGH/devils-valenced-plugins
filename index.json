@@ -5,12 +5,25 @@
   "plugins": {
     "devils.spotify-tools": {
       "name": "Spotify Tools",
-      "description": "Native Discord Listen Along rejoin on remote Spotify track changes via presence monitoring and a guarded player-state fallback, with original invite flow and song/album links.",
+      "description": "Native Discord Listen Along rejoin on track changes, watching both updated activity-card props and one-second presence polling, plus invite and song/album links.",
       "author": "DEVILS1NGH (https://github.com/DEVILS1NGH \"GitHub\")",
       "channels": {
-        "latest": "1.0.9"
+        "latest": "1.0.10"
       },
       "versions": {
+        "1.0.10": {
+          "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.10.zip",
+          "sha256": "18cb4f8a6ceb5eac2f8d2f0e14524d4ca4176d106e13a76fbf638bb881020efe",
+          "size": 22057,
+          "dependencies": {
+            "valenced.api": {
+              "version": ">=1 <2"
+            },
+            "discord": {
+              "version": "*"
+            }
+          }
+        },
         "1.0.9": {
           "url": "https://raw.githubusercontent.com/DEVILS1NGH/devils-valenced-plugins/gh-pages/pool/devils.spotify-tools@1.0.9.zip",
           "sha256": "fc210b8ba37058fb28af4ba0ecf2281ae84528e790c5c9a5913442f9531e4b68",
